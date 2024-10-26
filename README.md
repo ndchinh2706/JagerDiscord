@@ -1,6 +1,6 @@
-### JagerDiscord
+# JagerDiscord
 Team Jager's Discord bot for GDGOC Tech Probation 2024.
-# Jagermeister - GDGOC Probation 2024 - Jager Team
+## Jagermeister - GDGOC Probation 2024 - Jager Team
 - [ ] Thông báo sự kiện:
   - [ ] Thông báo sự kiện theo role.
   - [ ] Check-in sự kiện bằng key.
@@ -12,11 +12,11 @@ Team Jager's Discord bot for GDGOC Tech Probation 2024.
   - [ ] To be continued :)).
 - [ ] GReminder - GDí:
   - [ ] Bot sẽ thông báo đến từng người được mention theo role đã được setup trong "Thông báo sự kiện".
-### Installation:
-# Requirements:
+# Installation:
+## Requirements:
 - Python 3.11.9.
 - (to be updated)
-# Initial setup:
+## Initial setup:
 - Create environment
 - pip install -r requirements.txt
 - Replace API Key in constants.py
