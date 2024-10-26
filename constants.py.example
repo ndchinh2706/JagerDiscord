@@ -1,0 +1,4 @@
+Discord_API_KEY_bot = "APIKEY"
+
+#How to use this file?
+#Replace "APIKEY" with our Discord bot Secret API Key. Rename the file to constants.py
