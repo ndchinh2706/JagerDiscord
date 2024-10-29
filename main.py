@@ -1,19 +1,22 @@
 import constants
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord import app_commands
 from discord.ui import Button, View
-import datetime
+from datetime import datetime
 intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
+intents.members = True
+intents.presences = True
 
 bot = commands.Bot(command_prefix='/', intents=intents)
+events = {}
 
 @bot.event
 async def on_ready():
-    GUILD_ID = constants.Discord_GUILD_ID
-    guild = discord.Object(id=GUILD_ID)
+    GUILD_ID = constants.guild_id
+    guild = bot.get_channel(GUILD_ID)
     try:
         synced = await bot.tree.sync(guild=guild)
         print(f'Đã đồng bộ {len(synced)} lệnh cho máy chủ {GUILD_ID}')
@@ -21,11 +24,32 @@ async def on_ready():
         print(e)
     print(f'Đăng nhập thành công: {bot.user}')
 
+@tasks.loop(minutes=60)
+async def event_reminder():
+    current_time = datetime.now()
+    for event_name, event_info in events.items():
+        event_time = event_info['event_date']
+        attendees = event_info['attendees']
+        time_diff = event_time - current_time
+        # Gửi nhắc nhở trước sự kiện 1 giờ
+        if 0 < time_diff.total_seconds() <= 3600:
+            for attendee in attendees:
+                try:
+                    await attendee.send(f"**G-Dí đây!** \nThông báo: **{event_name}** sẽ diễn ra trong 1 giờ. Hãy chuẩn bị tinh thần để tham gia nhé!")
+                except discord.Forbidden:
+                    print(f"Không thể gửi tin nhắn cho {attendee.name}.")
+                except Exception as e:
+                    print(e)
+        # Hủy vòng lặp cho sự kiện đã diễn ra
+        if time_diff.total_seconds() <= 0:
+            del events[event_name]
+
 @bot.tree.command(name='event', description='Tạo một sự kiện để các thành viên xác nhận tham gia')
-@app_commands.describe(event_name='Tên sự kiện', event_date='Ngày tổ chức sự kiện', role='Vai trò tham gia sự kiện', due_date="Hạn đăng kí tham gia")
-async def create_event(interaction: discord.Interaction, event_name: str, event_date: str, role: discord.Role, due_date: str):
+@app_commands.describe(event_name='Tên sự kiện', event_date='Ngày tổ chức sự kiện', role='Vai trò tham gia sự kiện', due_date="Hạn đăng kí tham gia", more_info="Thông tin chi tiết")
+async def create_event(interaction: discord.Interaction, event_name: str, event_date: str, role: discord.Role, due_date: str, more_info: str):
     attend_button = Button(label='Có mặt', style=discord.ButtonStyle.success)
     decline_button = Button(label='Vắng mặt', style=discord.ButtonStyle.danger)
+    d = datetime.now()
 
     try:
         event_date_obj = datetime.strptime(event_date, "%d/%m/%Y") #tạm để đó bữa nào làm được cái DM thì làm lun hehe
@@ -52,7 +76,8 @@ async def create_event(interaction: discord.Interaction, event_name: str, event_
             f'Hạn đăng ký tham gia: {due_date}\n\n'
             f'✅ Có mặt: {attending_count}\n'
             f'❌ Vắng mặt: {not_attending_count}\n'
-            f'❓ Chưa bình chọn: {not_voted_count}'
+            f'❓ Chưa bình chọn: {not_voted_count}\n\n'
+            f'**Thông tin chi tiết: {more_info}**'
         )
 
         await event_message.edit(content=content, view=view)
@@ -66,6 +91,11 @@ async def create_event(interaction: discord.Interaction, event_name: str, event_
                         absentees.remove(interaction_button.user)
                     if interaction_button.user in not_voted:
                         not_voted.remove(interaction_button.user)
+                    if event_name not in events:
+                        events[event_name] = {
+                            'event_date': event_date_obj,
+                            'attendees': attendees
+                        }
                 await interaction_button.response.send_message(f'{interaction_button.user.name} sẽ có mặt!', ephemeral=True)
                 await update_event_message(event_message)
             else:
@@ -94,8 +124,17 @@ async def create_event(interaction: discord.Interaction, event_name: str, event_
     view.add_item(decline_button)
 
     event_message = await interaction.channel.send(
-        f'Sự kiện: **{event_name}**\nNgày tổ chức: {event_date}\nVai trò: {role.mention}\n\n✅ Có mặt: 0\n❌ Vắng mặt: 0\n❓ Chưa bình chọn: {len(not_voted)}',
+        f'Sự kiện: **{event_name}**\nNgày tổ chức: {event_date}\nVai trò: {role.mention}\n\n✅ Có mặt: 0\n❌ Vắng mặt: 0\n❓ Chưa bình chọn: {len(not_voted)}\n\n**Thông tin chi tiết: {more_info}**',
         view=view
     )
+
+    for member in role.members:
+        if not member.bot:
+            try:
+                await member.send(f'**G-Dí đây!** \nSự kiện **{event_name}** sắp diễn ra vào ngày {event_date}. Vui lòng truy cập vào server Discord của GDGOC để xác nhận tham gia hoặc vắng mặt. Cảm ơn bạn!')
+            except discord.Forbidden:
+                print(f"Không thể gửi tin nhắn cho {member.name}.")
+            except Exception as e:
+                print(e)
 
 bot.run(constants.Discord_API_KEY_bot)
