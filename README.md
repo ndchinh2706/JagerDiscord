@@ -20,3 +20,7 @@ Team Jager's Discord bot for GDGOC Tech Probation 2024.
 - Create environment
 - pip install -r requirements.txt
 - Replace API Key in constants.py
+## Current environment variables:
+- Discord_API_KEY_bot = ""
+- Discord_GUILD_ID = 
+- Discord_CHANNEL_ID = 
