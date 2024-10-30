@@ -24,3 +24,4 @@ Team Jager's Discord bot for GDGOC Tech Probation 2024.
 - Discord_API_KEY_bot = ""
 - Discord_GUILD_ID = 
 - Discord_CHANNEL_ID = 
+- db_file = 'events.db'
