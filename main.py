@@ -1,101 +1,127 @@
-import constants
 import discord
 from discord.ext import commands
 from discord import app_commands
-from discord.ui import Button, View
+import sqlite3
 import datetime
+from constants import Discord_API_KEY_bot, db_file
+import database
+
 intents = discord.Intents.default()
 intents.message_content = True
-intents.guilds = True
+intents.reactions = True
+bot = commands.Bot(command_prefix="/", intents=intents)
 
-bot = commands.Bot(command_prefix='/', intents=intents)
+
+#Database processing functions
+def add_event(event_name, event_date, role_id, due_date, message_id, channel_id, guild_id):
+    conn = sqlite3.connect(db_file)
+    c = conn.cursor()
+    c.execute("INSERT INTO events (event_name, event_date, role_id, due_date, message_id, channel_id, guild_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
+              (event_name, event_date, role_id, due_date, message_id, channel_id, guild_id))
+    conn.commit()
+    conn.close()
+
+def update_participant(event_id, user_id, status):
+    conn = sqlite3.connect(db_file)
+    c = conn.cursor()
+    c.execute("INSERT OR REPLACE INTO participants (event_id, user_id, status) VALUES (?, ?, ?)",
+              (event_id, user_id, status))
+    conn.commit()
+    conn.close()
+
+def get_event_participation(event_id):
+    conn = sqlite3.connect(db_file)
+    c = conn.cursor()
+    c.execute("SELECT status, COUNT(*) FROM participants WHERE event_id = ? GROUP BY status", (event_id,))
+    participation_counts = {row[0]: row[1] for row in c.fetchall()}
+    conn.close()
+    return participation_counts
+
+#Load các events cũ khi bot khởi động, add các reaction default.
+async def load_persisted_events():
+    conn = sqlite3.connect(db_file)
+    c = conn.cursor()
+    c.execute("SELECT message_id, channel_id, guild_id FROM events")
+    events = c.fetchall()
+    conn.close()
+    for message_id, channel_id, guild_id in events:
+        guild = bot.get_guild(guild_id)
+        if guild:
+            channel = bot.get_channel(channel_id)
+            if channel:
+                try:
+                    message = await channel.fetch_message(message_id)
+                    await message.add_reaction("✅")
+                    await message.add_reaction("❌")
+                except (discord.NotFound, discord.Forbidden):
+                    print(f"Không thể tìm thấy tin nhắn {message_id} trong kênh {channel_id}.")
+
+
+#Bot event
+@bot.tree.command(name="event", description="Tạo sự kiện mới")
+async def create_event(interaction: discord.Interaction, 
+                       event_name: str, 
+                       event_date: str, 
+                       role: discord.Role, 
+                       due_date: str):
+    
+    try:
+        event_dt = datetime.datetime.strptime(event_date, "%d/%m/%Y")
+        due_dt = datetime.datetime.strptime(due_date, "%d/%m/%Y")
+    except ValueError:
+        await interaction.response.send_message("Ngày phải ở định dạng DD/MM/YYYY", ephemeral=True)
+        return
+    
+    embed = discord.Embed(title=f"Event: {event_name}", color=discord.Color.green())
+    embed.add_field(name="Ngày tổ chức", value=event_date, inline=False)
+    embed.add_field(name="Hạn chót", value=due_date, inline=False)
+    embed.add_field(name="Role", value=role.mention, inline=False)
+    embed.add_field(name="Tham gia", value="0", inline=True)
+    embed.add_field(name="Không thể tham gia", value="0", inline=True)
+    
+    await interaction.response.send_message(embed=embed)
+    message = await interaction.original_response()
+    await message.add_reaction("✅")
+    await message.add_reaction("❌")
+    
+    add_event(event_name, event_date, role.id, due_date, message.id, interaction.channel_id, interaction.guild.id)
+
+@bot.event
+async def on_raw_reaction_add(payload):
+    if payload.user_id == bot.user.id:
+        return
+
+    conn = sqlite3.connect(db_file)
+    c = conn.cursor()
+    c.execute("SELECT id FROM events WHERE message_id = ?", (payload.message_id,))
+    event_data = c.fetchone()
+    conn.close()
+    
+    if event_data:
+        event_id = event_data[0]
+        status = "going" if payload.emoji.name == "✅" else "not_going" if payload.emoji.name == "❌" else None
+        if status:
+            update_participant(event_id, payload.user_id, status)
+        
+        participation_counts = get_event_participation(event_id)
+        going_count = participation_counts.get("going", 0)
+        not_going_count = participation_counts.get("not_going", 0)
+        
+        guild = bot.get_guild(payload.guild_id)
+        if guild:
+            channel = guild.get_channel(payload.channel_id)
+            if channel:
+                message = await channel.fetch_message(payload.message_id)
+                embed = message.embeds[0]
+                embed.set_field_at(3, name="Tham gia", value=str(going_count), inline=True)
+                embed.set_field_at(4, name="Không thể tham gia", value=str(not_going_count), inline=True)
+                await message.edit(embed=embed)
 
 @bot.event
 async def on_ready():
-    GUILD_ID = constants.Discord_GUILD_ID
-    guild = discord.Object(id=GUILD_ID)
-    try:
-        synced = await bot.tree.sync(guild=guild)
-        print(f'Đã đồng bộ {len(synced)} lệnh cho máy chủ {GUILD_ID}')
-    except Exception as e:
-        print(e)
-    print(f'Đăng nhập thành công: {bot.user}')
+    await bot.tree.sync()
+    await load_persisted_events()
+    print("Ready")
 
-@bot.tree.command(name='event', description='Tạo một sự kiện để các thành viên xác nhận tham gia')
-@app_commands.describe(event_name='Tên sự kiện', event_date='Ngày tổ chức sự kiện', role='Vai trò tham gia sự kiện', due_date="Hạn đăng kí tham gia")
-async def create_event(interaction: discord.Interaction, event_name: str, event_date: str, role: discord.Role, due_date: str):
-    attend_button = Button(label='Có mặt', style=discord.ButtonStyle.success)
-    decline_button = Button(label='Vắng mặt', style=discord.ButtonStyle.danger)
-
-    try:
-        event_date_obj = datetime.strptime(event_date, "%d/%m/%Y") #tạm để đó bữa nào làm được cái DM thì làm lun hehe
-        due_date_obj = datetime.strptime(due_date, "%d/%m/%Y")
-    except ValueError:
-        await interaction.response.send_message("Ngày không hợp lệ! Vui lòng sử dụng định dạng DD/MM/YYYY.", ephemeral=True)
-        return
-    if due_date_obj >= event_date_obj:
-        await interaction.response.send_message("Hạn đăng kí phải trước ngày tổ chức sự kiện.", ephemeral=True)
-        return
-    
-    attendees = []
-    absentees = []
-    not_voted = [member for member in role.members]  #Đếch hiểu sao không get được role.members.
-    print(role.members)
-    async def update_event_message(event_message):
-        attending_count = len(attendees)
-        not_attending_count = len(absentees)
-        not_voted_count = len(not_voted) - attending_count - not_attending_count
-        content = (
-            f'Sự kiện: **{event_name}**\n'
-            f'Ngày tổ chức: {event_date}\n'
-            f'Vai trò: {role.mention}\n\n'
-            f'Hạn đăng ký tham gia: {due_date}\n\n'
-            f'✅ Có mặt: {attending_count}\n'
-            f'❌ Vắng mặt: {not_attending_count}\n'
-            f'❓ Chưa bình chọn: {not_voted_count}'
-        )
-
-        await event_message.edit(content=content, view=view)
-
-    async def attend_callback(interaction_button: discord.Interaction):
-        if (due_date_obj > d):
-            if role in interaction_button.user.roles:
-                if interaction_button.user not in attendees:
-                    attendees.append(interaction_button.user)
-                    if interaction_button.user in absentees:
-                        absentees.remove(interaction_button.user)
-                    if interaction_button.user in not_voted:
-                        not_voted.remove(interaction_button.user)
-                await interaction_button.response.send_message(f'{interaction_button.user.name} sẽ có mặt!', ephemeral=True)
-                await update_event_message(event_message)
-            else:
-                await interaction_button.response.send_message('Bạn không có quyền tham gia sự kiện này.', ephemeral=True)
-        else:
-            await interaction_button.response.send_message('Đã hết thời gian đăng kí sự kiện.', ephemeral=True)
-
-    async def decline_callback(interaction_button: discord.Interaction):
-        if role in interaction_button.user.roles:
-            if interaction_button.user not in absentees:
-                absentees.append(interaction_button.user)
-                if interaction_button.user in attendees:
-                    attendees.remove(interaction_button.user)
-                if interaction_button.user in not_voted:
-                    not_voted.remove(interaction_button.user)
-            await interaction_button.response.send_message(f'{interaction_button.user.name} sẽ vắng mặt.', ephemeral=True)
-            await update_event_message(event_message)
-        else:
-            await interaction_button.response.send_message('Bạn không có quyền tham gia sự kiện này.', ephemeral=True)
-
-    attend_button.callback = attend_callback
-    decline_button.callback = decline_callback
-
-    view = View()
-    view.add_item(attend_button)
-    view.add_item(decline_button)
-
-    event_message = await interaction.channel.send(
-        f'Sự kiện: **{event_name}**\nNgày tổ chức: {event_date}\nVai trò: {role.mention}\n\n✅ Có mặt: 0\n❌ Vắng mặt: 0\n❓ Chưa bình chọn: {len(not_voted)}',
-        view=view
-    )
-
-bot.run(constants.Discord_API_KEY_bot)
+database.setup_database()
+bot.run(Discord_API_KEY_bot)
