@@ -11,15 +11,16 @@ intents.message_content = True
 intents.reactions = True
 bot = commands.Bot(command_prefix="/", intents=intents)
 
-
-#Database processing functions
+# Database processing functions
 def add_event(event_name, event_date, role_id, due_date, message_id, channel_id, guild_id):
     conn = sqlite3.connect(db_file)
     c = conn.cursor()
     c.execute("INSERT INTO events (event_name, event_date, role_id, due_date, message_id, channel_id, guild_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
               (event_name, event_date, role_id, due_date, message_id, channel_id, guild_id))
     conn.commit()
+    event_id = c.lastrowid
     conn.close()
+    return event_id
 
 def update_participant(event_id, user_id, status):
     conn = sqlite3.connect(db_file)
@@ -37,14 +38,14 @@ def get_event_participation(event_id):
     conn.close()
     return participation_counts
 
-#Load các events cũ khi bot khởi động, add các reaction default.
+# Load các events cũ khi bot khởi động, add các reaction default.
 async def load_persisted_events():
     conn = sqlite3.connect(db_file)
     c = conn.cursor()
-    c.execute("SELECT message_id, channel_id, guild_id FROM events")
+    c.execute("SELECT id, message_id, channel_id, guild_id FROM events")
     events = c.fetchall()
     conn.close()
-    for message_id, channel_id, guild_id in events:
+    for event_id, message_id, channel_id, guild_id in events:
         guild = bot.get_guild(guild_id)
         if guild:
             channel = bot.get_channel(channel_id)
@@ -56,8 +57,7 @@ async def load_persisted_events():
                 except (discord.NotFound, discord.Forbidden):
                     print(f"Không thể tìm thấy tin nhắn {message_id} trong kênh {channel_id}.")
 
-
-#Bot event
+# Bot event
 @bot.tree.command(name="event", description="Tạo sự kiện mới")
 async def create_event(interaction: discord.Interaction, 
                        event_name: str, 
@@ -84,7 +84,9 @@ async def create_event(interaction: discord.Interaction,
     await message.add_reaction("✅")
     await message.add_reaction("❌")
     
-    add_event(event_name, event_date, role.id, due_date, message.id, interaction.channel_id, interaction.guild.id)
+    event_id = add_event(event_name, event_date, role.id, due_date, message.id, interaction.channel_id, interaction.guild.id)
+    embed.set_footer(text=f"Event ID: {event_id}")
+    await message.edit(embed=embed)
 
 @bot.event
 async def on_raw_reaction_add(payload):
