@@ -11,10 +11,6 @@ intents.message_content = True
 intents.reactions = True
 bot = commands.Bot(command_prefix="/", intents=intents)
 
-<<<<<<< Updated upstream
-
-#Database processing functions
-=======
 conn = psycopg2.connect(
     dbname=DB_Name,
     user=DB_User,
@@ -23,7 +19,6 @@ conn = psycopg2.connect(
     port=DB_Port   
 )
 
->>>>>>> Stashed changes
 def add_event(event_name, event_date, role_id, due_date, message_id, channel_id, guild_id):
     c = conn.cursor()
     c.execute(
@@ -32,11 +27,7 @@ def add_event(event_name, event_date, role_id, due_date, message_id, channel_id,
     )
     event_id = c.fetchone()[0]  # Lấy ID của sự kiện vừa tạo
     conn.commit()
-<<<<<<< Updated upstream
-    conn.close()
-=======
     return event_id
->>>>>>> Stashed changes
 
 def update_participant(event_id, user_id, status):
     c = conn.cursor()
@@ -57,20 +48,11 @@ def get_event_participation(event_id):
     participation_counts = {row[0]: row[1] for row in c.fetchall()}
     return participation_counts
 
-<<<<<<< Updated upstream
-#Load các events cũ khi bot khởi động, add các reaction default.
-=======
->>>>>>> Stashed changes
 async def load_persisted_events():
     c = conn.cursor()
     c.execute("SELECT message_id, channel_id, guild_id FROM events")
     events = c.fetchall()
-<<<<<<< Updated upstream
-    conn.close()
-    for message_id, channel_id, guild_id in events:
-=======
     for event_id, message_id, channel_id, guild_id in events:
->>>>>>> Stashed changes
         guild = bot.get_guild(guild_id)
         if guild:
             channel = bot.get_channel(channel_id)
@@ -82,12 +64,7 @@ async def load_persisted_events():
                 except (discord.NotFound, discord.Forbidden):
                     print(f"Không thể tìm thấy tin nhắn {message_id} trong kênh {channel_id}.")
 
-<<<<<<< Updated upstream
-
-#Bot event
-=======
 # Lệnh bot để tạo sự kiện mới
->>>>>>> Stashed changes
 @bot.tree.command(name="event", description="Tạo sự kiện mới")
 async def create_event(interaction: discord.Interaction, event_name: str, event_date: str, role: discord.Role, due_date: str):
     try:
@@ -108,15 +85,10 @@ async def create_event(interaction: discord.Interaction, event_name: str, event_
     message = await interaction.original_response()
     await message.add_reaction("✅")
     await message.add_reaction("❌")
-<<<<<<< Updated upstream
-    
-    add_event(event_name, event_date, role.id, due_date, message.id, interaction.channel_id, interaction.guild.id)
-=======
 
     event_id = add_event(event_name, event_date, role.id, due_date, message.id, interaction.channel_id, interaction.guild.id)
     embed.set_footer(text=f"ID sự kiện: {event_id}")
     await message.edit(embed=embed)
->>>>>>> Stashed changes
 
 @bot.event
 async def on_raw_reaction_add(payload):
