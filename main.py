@@ -1,50 +1,76 @@
 import discord
 from discord.ext import commands
-from discord import app_commands
 import sqlite3
 import datetime
-from constants import Discord_API_KEY_bot, db_file
+from constants import Discord_API_KEY_bot, DB_Name, DB_User, DB_Pass, DB_Host, DB_Port
 import database
+import psycopg2
 
 intents = discord.Intents.default()
 intents.message_content = True
 intents.reactions = True
 bot = commands.Bot(command_prefix="/", intents=intents)
 
+<<<<<<< Updated upstream
 
 #Database processing functions
+=======
+conn = psycopg2.connect(
+    dbname=DB_Name,
+    user=DB_User,
+    password=DB_Pass,
+    host=DB_Host,  
+    port=DB_Port   
+)
+
+>>>>>>> Stashed changes
 def add_event(event_name, event_date, role_id, due_date, message_id, channel_id, guild_id):
-    conn = sqlite3.connect(db_file)
     c = conn.cursor()
-    c.execute("INSERT INTO events (event_name, event_date, role_id, due_date, message_id, channel_id, guild_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
-              (event_name, event_date, role_id, due_date, message_id, channel_id, guild_id))
+    c.execute(
+        "INSERT INTO events (event_name, event_date, role_id, due_date, message_id, channel_id, guild_id) VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id",
+        (event_name, event_date, role_id, due_date, message_id, channel_id, guild_id)
+    )
+    event_id = c.fetchone()[0]  # Lấy ID của sự kiện vừa tạo
     conn.commit()
+<<<<<<< Updated upstream
     conn.close()
+=======
+    return event_id
+>>>>>>> Stashed changes
 
 def update_participant(event_id, user_id, status):
-    conn = sqlite3.connect(db_file)
     c = conn.cursor()
-    c.execute("INSERT OR REPLACE INTO participants (event_id, user_id, status) VALUES (?, ?, ?)",
-              (event_id, user_id, status))
+    c.execute(
+        """
+        INSERT INTO participants (event_id, user_id, status)
+        VALUES (%s, %s, %s)
+        ON CONFLICT (event_id, user_id)
+        DO UPDATE SET status = EXCLUDED.status
+        """,
+        (event_id, user_id, status)
+    )
     conn.commit()
-    conn.close()
 
 def get_event_participation(event_id):
-    conn = sqlite3.connect(db_file)
     c = conn.cursor()
-    c.execute("SELECT status, COUNT(*) FROM participants WHERE event_id = ? GROUP BY status", (event_id,))
+    c.execute("SELECT status, COUNT(*) FROM participants WHERE event_id = %s GROUP BY status", (event_id,))
     participation_counts = {row[0]: row[1] for row in c.fetchall()}
-    conn.close()
     return participation_counts
 
+<<<<<<< Updated upstream
 #Load các events cũ khi bot khởi động, add các reaction default.
+=======
+>>>>>>> Stashed changes
 async def load_persisted_events():
-    conn = sqlite3.connect(db_file)
     c = conn.cursor()
     c.execute("SELECT message_id, channel_id, guild_id FROM events")
     events = c.fetchall()
+<<<<<<< Updated upstream
     conn.close()
     for message_id, channel_id, guild_id in events:
+=======
+    for event_id, message_id, channel_id, guild_id in events:
+>>>>>>> Stashed changes
         guild = bot.get_guild(guild_id)
         if guild:
             channel = bot.get_channel(channel_id)
@@ -56,57 +82,60 @@ async def load_persisted_events():
                 except (discord.NotFound, discord.Forbidden):
                     print(f"Không thể tìm thấy tin nhắn {message_id} trong kênh {channel_id}.")
 
+<<<<<<< Updated upstream
 
 #Bot event
+=======
+# Lệnh bot để tạo sự kiện mới
+>>>>>>> Stashed changes
 @bot.tree.command(name="event", description="Tạo sự kiện mới")
-async def create_event(interaction: discord.Interaction, 
-                       event_name: str, 
-                       event_date: str, 
-                       role: discord.Role, 
-                       due_date: str):
-    
+async def create_event(interaction: discord.Interaction, event_name: str, event_date: str, role: discord.Role, due_date: str):
     try:
         event_dt = datetime.datetime.strptime(event_date, "%d/%m/%Y")
         due_dt = datetime.datetime.strptime(due_date, "%d/%m/%Y")
     except ValueError:
         await interaction.response.send_message("Ngày phải ở định dạng DD/MM/YYYY", ephemeral=True)
         return
-    
-    embed = discord.Embed(title=f"Event: {event_name}", color=discord.Color.green())
+
+    embed = discord.Embed(title=f"Sự kiện: {event_name}", color=discord.Color.green())
     embed.add_field(name="Ngày tổ chức", value=event_date, inline=False)
     embed.add_field(name="Hạn chót", value=due_date, inline=False)
-    embed.add_field(name="Role", value=role.mention, inline=False)
+    embed.add_field(name="Vai trò", value=role.mention, inline=False)
     embed.add_field(name="Tham gia", value="0", inline=True)
     embed.add_field(name="Không thể tham gia", value="0", inline=True)
-    
+
     await interaction.response.send_message(embed=embed)
     message = await interaction.original_response()
     await message.add_reaction("✅")
     await message.add_reaction("❌")
+<<<<<<< Updated upstream
     
     add_event(event_name, event_date, role.id, due_date, message.id, interaction.channel_id, interaction.guild.id)
+=======
+
+    event_id = add_event(event_name, event_date, role.id, due_date, message.id, interaction.channel_id, interaction.guild.id)
+    embed.set_footer(text=f"ID sự kiện: {event_id}")
+    await message.edit(embed=embed)
+>>>>>>> Stashed changes
 
 @bot.event
 async def on_raw_reaction_add(payload):
     if payload.user_id == bot.user.id:
         return
-
-    conn = sqlite3.connect(db_file)
     c = conn.cursor()
-    c.execute("SELECT id FROM events WHERE message_id = ?", (payload.message_id,))
+    c.execute("SELECT id FROM events WHERE message_id = %s", (payload.message_id,))
     event_data = c.fetchone()
-    conn.close()
-    
+
     if event_data:
         event_id = event_data[0]
         status = "going" if payload.emoji.name == "✅" else "not_going" if payload.emoji.name == "❌" else None
         if status:
             update_participant(event_id, payload.user_id, status)
-        
+
         participation_counts = get_event_participation(event_id)
         going_count = participation_counts.get("going", 0)
         not_going_count = participation_counts.get("not_going", 0)
-        
+
         guild = bot.get_guild(payload.guild_id)
         if guild:
             channel = guild.get_channel(payload.channel_id)
@@ -121,7 +150,7 @@ async def on_raw_reaction_add(payload):
 async def on_ready():
     await bot.tree.sync()
     await load_persisted_events()
-    print("Ready")
+    print("Bot đã sẵn sàng.")
 
 database.setup_database()
 bot.run(Discord_API_KEY_bot)
