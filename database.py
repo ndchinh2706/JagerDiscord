@@ -1,12 +1,13 @@
 import psycopg2
+from constants import Discord_API_KEY_bot, DB_Name, DB_User, DB_Pass, DB_Host, DB_Port
 
 def setup_database():
     conn = psycopg2.connect(
-        dbname="jager",
-        user="postgres",
-        password="postgres",
-        host="localhost",  
-        port="5432"   
+        dbname=DB_Name,
+        user=DB_User,
+        password=DB_Pass,
+        host=DB_Host,  
+        port=DB_Port   
     )
     
     c = conn.cursor()
