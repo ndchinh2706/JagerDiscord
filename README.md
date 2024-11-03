@@ -3,7 +3,7 @@ Team Jager's Discord bot for GDGOC Tech Probation 2024.
 ## Jagermeister - GDGOC Probation 2024 - Jager Team
 - [ ] Thông báo sự kiện:
   - [x] Thông báo sự kiện theo role.
-  - [ ] Check-in sự kiện bằng key.
+  - [ ] Check-in sự kiện bằng web.
 - [ ] Order đồ:
   - [ ] GPay - Tạo API → up bill → Auto kiểm tra
 - [ ] Xuất ra Google Sheet.
