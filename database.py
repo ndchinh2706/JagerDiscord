@@ -1,5 +1,5 @@
 import psycopg2
-from constants import Discord_API_KEY_bot, DB_Name, DB_User, DB_Pass, DB_Host, DB_Port
+from constants import DB_Name, DB_User, DB_Pass, DB_Host, DB_Port
 
 def setup_database():
     conn = psycopg2.connect(
@@ -13,19 +13,19 @@ def setup_database():
     c = conn.cursor()
     
     c.execute('''CREATE TABLE IF NOT EXISTS events (
-                    id SERIAL PRIMARY KEY,
-                    event_name VARCHAR,
+                    id BIGSERIAL PRIMARY KEY,
+                    event_name TEXT,
                     event_date TEXT,
-                    role_id INTEGER,
+                    role_id BIGINT,
                     due_date TEXT,
-                    message_id INTEGER,
-                    guild_id INTEGER,
-                    channel_id INTEGER
+                    message_id BIGINT,
+                    guild_id BIGINT,
+                    channel_id BIGINT
                  )''')
     
     c.execute('''CREATE TABLE IF NOT EXISTS participants (
                     event_id INTEGER,
-                    user_id INTEGER,
+                    user_id BIGINT,
                     status VARCHAR,
                     PRIMARY KEY (event_id, user_id),
                     FOREIGN KEY (event_id) REFERENCES events(id)
@@ -40,7 +40,7 @@ def setup_database():
                  )''')
     
     c.execute('''CREATE TABLE IF NOT EXISTS user_points (
-                    user_id INTEGER PRIMARY KEY,
+                    user_id BIGINT PRIMARY KEY,
                     points INTEGER
                  )''')
     
