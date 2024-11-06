@@ -50,9 +50,9 @@ def remove_participant(event_id, user_id, status):
 
 def delete_old_events(event_id):
     c = conn.cursor()
-    c.execute("DELETE FROM events WHERE id = %s", 
-              (event_id,))
     c.execute("DELETE FROM participants WHERE event_id = %s", 
+              (event_id,))
+    c.execute("DELETE FROM events WHERE id = %s", 
               (event_id,))
     conn.commit()
 
@@ -106,7 +106,7 @@ async def event_reminder():
     events = c.fetchall()
     for event in events:
         event_id, event_name, event_date = event
-        event_dt = datetime.datetime.strptime(event_date, "%d/%m/%Y")
+        event_dt = datetime.datetime.strptime(event_date, "%H:%M %d/%m/%Y")
         time_diff_event = event_dt - current_time
         participants = []
         c = conn.cursor()
@@ -130,10 +130,10 @@ async def event_reminder():
 @bot.tree.command(name="event", description="Tạo sự kiện mới")
 async def create_event(interaction: discord.Interaction, event_name: str, event_date: str, role: discord.Role, due_date: str):
     try:
-        event_dt = datetime.datetime.strptime(event_date, "%d/%m/%Y")
-        due_dt = datetime.datetime.strptime(due_date, "%d/%m/%Y")
+        event_dt = datetime.datetime.strptime(event_date, "%H:%M %d/%m/%Y")
+        due_dt = datetime.datetime.strptime(due_date, "%H:%M %d/%m/%Y")
     except ValueError:
-        await interaction.response.send_message("Ngày phải ở định dạng DD/MM/YYYY", ephemeral=True)
+        await interaction.response.send_message("Ngày phải ở định dạng [HH:MM DD/MM/YYYY]", ephemeral=True)
         return
 
     embed = discord.Embed(title=f"Sự kiện: {event_name}", color=discord.Color.green())
