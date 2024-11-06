@@ -7,5 +7,6 @@ DB_User="postgres"
 DB_Pass="postgres"
 DB_Host="localhost"
 DB_Port="5432" 
+ObfuscationKey = "ObfuscationKey"
 #How to use this file?
 #Replace all field. Rename the file to constants.py
