@@ -124,6 +124,7 @@ async def event_reminder():
                         print("Đã gửi thông báo")
                     except discord.Forbidden:
                         print(f"Lỗi: Không thể gửi tin nhắn cho {user.name (user_id)}.")
+                else: print(f"Còn {time_diff_event}")
 
 
 # Lệnh bot để tạo sự kiện mới
