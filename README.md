@@ -7,11 +7,11 @@ Team Jager's Discord bot for GDGOC Tech Probation 2024.
 - [ ] Order đồ:
   - [ ] GPay - Tạo API → up bill → Auto kiểm tra
 - [ ] Xuất ra Google Sheet.
-- [ ] GPoint:
+- [ ] GPoint: (bỏ :))))
   - [ ] Point sẽ được +/- bằng lượt check-in sớm, trễ, sớm due-date do HR đề ra.
   - [ ] Ranking system
   - [ ] To be continued :)).
-- [ ] GReminder:
+- [ ] GReminder: (Xem xét)
   - [ ] Bot sẽ thông báo đến từng người được mention theo role đã được setup trong "Thông báo sự kiện".
   - [ ] Thông báo lại cho người tham gia 1h trước sự kiện
 # Installation:
