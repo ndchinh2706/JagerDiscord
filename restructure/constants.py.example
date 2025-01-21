@@ -1,11 +1,10 @@
 Discord_API_KEY_bot = "APIKEY"
 Discord_GUILD_ID = 888888888888
 Discord_CHANNEL_ID = 999999999999
-db_file = 'events.db'
 DB_Name="jager"
 DB_User="postgres"
 DB_Pass="postgres"
 DB_Host="localhost"
 DB_Port="5432" 
-#How to use this file?
-#Replace all field. Rename the file to constants.py
+API_KEY = ":))"
+API_URL = "https://url/v1/chat/completions"

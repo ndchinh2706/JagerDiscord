@@ -3,6 +3,16 @@ from discord import app_commands
 from discord.ext import commands, tasks
 import datetime
 from utils.database import db
+
+def has_required_role():
+    async def predicate(interaction: discord.Interaction) -> bool:
+        allowed_role_names = ["Admin"]
+        if not any(discord.utils.get(interaction.user.roles, name=role_name) for role_name in allowed_role_names):
+            await interaction.response.send_message(f"Bạn cần có một trong các role sau để sử dụng lệnh này: {', '.join(allowed_role_names)}", ephemeral=True)
+            return False
+        return True
+    return app_commands.check(predicate)
+
 class EventHandler(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -21,6 +31,7 @@ class EventHandler(commands.Cog):
         role="Role được tham gia sự kiện",
         due_datetime="Hạn chót đăng ký (HH:MM DD/MM/YYYY)"
     )
+    @has_required_role()
     async def create_event(self, interaction: discord.Interaction, event_name: str, event_datetime: str, role: discord.Role, due_datetime: str):
         try:
             event_dt = datetime.datetime.strptime(event_datetime, "%H:%M %d/%m/%Y")
@@ -225,8 +236,7 @@ class EventHandler(commands.Cog):
                     await message.add_reaction("❌")
                     await self.update_event_message(event['message_id'], event['id'])
                 except discord.NotFound:
-                    print(f"Không thể tìm thấy tin nhắn {event['message_id']} trong kênh {event['channel_id']}.")
-
+                    pass
 async def setup(bot):
     event_handler = EventHandler(bot)
     await bot.add_cog(event_handler)

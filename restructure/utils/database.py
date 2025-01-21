@@ -2,7 +2,7 @@
 
 import psycopg2
 from psycopg2.extras import DictCursor
-from config import DB_CONFIG
+from constants import DB_CONFIG
 
 class Database:
     def __init__(self):
@@ -13,23 +13,16 @@ class Database:
         try:
             self.conn = psycopg2.connect(**DB_CONFIG)
             self.cursor = self.conn.cursor(cursor_factory=DictCursor)
-            print("Database connection successful")
             self.create_tables()
         except (Exception, psycopg2.Error) as error:
-            print("Error while connecting to PostgreSQL", error)
-
-    def disconnect(self):
-        if self.conn:
-            self.cursor.close()
-            self.conn.close()
-            print("Database connection closed")
+            print(error)
 
     def execute_query(self, query, params=None):
         try:
             self.cursor.execute(query, params or ())
             self.conn.commit()
         except (Exception, psycopg2.Error) as error:
-            print("Error executing query:", error)
+            print(error)
             self.conn.rollback()
 
     def fetch_all(self, query, params=None):
@@ -37,7 +30,7 @@ class Database:
             self.cursor.execute(query, params or ())
             return self.cursor.fetchall()
         except (Exception, psycopg2.Error) as error:
-            print("Error fetching data:", error)
+            print(error)
             return []
 
     def fetch_one(self, query, params=None):
@@ -45,7 +38,7 @@ class Database:
             self.cursor.execute(query, params or ())
             return self.cursor.fetchone()
         except (Exception, psycopg2.Error) as error:
-            print("Error fetching data:", error)
+            print(error)
             return None
 
     def create_tables(self):
@@ -85,12 +78,24 @@ class Database:
                 reminder_type VARCHAR(20),
                 sent_at TIMESTAMP,
                 PRIMARY KEY (event_id, user_id, reminder_type)
-            )'''
+            )''',
+            '''
+            CREATE SEQUENCE IF NOT EXISTS ticket_id_seq
+            ''',
+            '''
+            CREATE TABLE IF NOT EXISTS tickets (
+                id SERIAL PRIMARY KEY,
+                ticket_id VARCHAR UNIQUE NOT NULL,
+                user_id BIGINT NOT NULL,
+                channel_id BIGINT,
+                status VARCHAR DEFAULT 'open',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                closed_at TIMESTAMP,
+                amount DECIMAL(10, 2) DEFAULT 0
+            )
+            '''
         ]
 
         for table in tables:
             self.execute_query(table)
-        
-        print("All tables created successfully")
-
 db = Database()
