@@ -3,6 +3,7 @@ from discord.ext import commands
 from utils.database import db
 import asyncio
 from constants import Discord_API_KEY_bot
+import backend.backend
 intents = discord.Intents.default()
 intents.message_content = True
 intents.reactions = True
@@ -36,3 +37,4 @@ async def main():
         await bot.start(Discord_API_KEY_bot)
 
 asyncio.run(main())
+asyncio.run(backend.backend.run_app())

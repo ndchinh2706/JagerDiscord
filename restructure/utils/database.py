@@ -1,5 +1,3 @@
-# utils/database.py
-
 import psycopg2
 from psycopg2.extras import DictCursor
 from constants import DB_CONFIG
@@ -47,11 +45,16 @@ class Database:
                 id SERIAL PRIMARY KEY,
                 event_name VARCHAR,
                 event_datetime TIMESTAMP,
-                role_id BIGINT,
                 due_datetime TIMESTAMP,
                 message_id BIGINT,
                 guild_id BIGINT,
                 channel_id BIGINT
+            )''',
+            '''CREATE TABLE IF NOT EXISTS event_roles (
+                id SERIAL PRIMARY KEY,
+                event_id INTEGER REFERENCES events(id),
+                role_id BIGINT NOT NULL,
+                UNIQUE(event_id, role_id)
             )''',
             '''CREATE TABLE IF NOT EXISTS permission (
                 user_id VARCHAR,
@@ -79,11 +82,8 @@ class Database:
                 sent_at TIMESTAMP,
                 PRIMARY KEY (event_id, user_id, reminder_type)
             )''',
-            '''
-            CREATE SEQUENCE IF NOT EXISTS ticket_id_seq
-            ''',
-            '''
-            CREATE TABLE IF NOT EXISTS tickets (
+            '''CREATE SEQUENCE IF NOT EXISTS ticket_id_seq''',
+            '''CREATE TABLE IF NOT EXISTS tickets (
                 id SERIAL PRIMARY KEY,
                 ticket_id VARCHAR UNIQUE NOT NULL,
                 user_id BIGINT NOT NULL,
@@ -92,10 +92,9 @@ class Database:
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 closed_at TIMESTAMP,
                 amount DECIMAL(10, 2) DEFAULT 0
-            )
-            '''
+            )'''
         ]
-
         for table in tables:
             self.execute_query(table)
+
 db = Database()

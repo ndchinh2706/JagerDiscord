@@ -95,7 +95,7 @@ class OrderCog(commands.Cog):
         image_url = f"https://api.vietqr.io/image/970422-066060606-xsU52l1.jpg?accountName=NGUYEN%20DINH%20CHINH&amount=0&addInfo={urllib.parse.quote(ticket_id)}"
         
         embed = discord.Embed(title=f"Order Ticket: {ticket_id}", 
-                              description="Chào mừng đến với order của bạn! Hãy gủi vào đây order của bạn. LƯU Ý: CHỈ ĐÓNG ORDER KHI ĐÃ NHẬN ĐƯỢC ĐẦY ĐỦ ORDER!", 
+                              description="Chào mừng đến với order của bạn! Hãy gửi vào đây order của bạn. LƯU Ý: CHỈ ĐÓNG ORDER KHI ĐÃ NHẬN ĐƯỢC ĐẦY ĐỦ ORDER!", 
                               color=discord.Color.blue())
         embed.set_image(url=image_url)
         embed.add_field(name="Hướng dẫn", value="Vui lòng chuyển khoản vào QR dưới đây và đợi xác nhận.")
@@ -116,24 +116,27 @@ class OrderCog(commands.Cog):
         await channel.send(embed=embed, view=view)
 
     async def confirm_close_ticket(self, interaction, channel, ticket_id):
-        confirm_view = discord.ui.View()
-        confirm_button = discord.ui.Button(label="Xác nhận đóng", style=discord.ButtonStyle.danger)
-        cancel_button = discord.ui.Button(label="Hủy", style=discord.ButtonStyle.secondary)
+        try:
+            confirm_view = discord.ui.View()
+            confirm_button = discord.ui.Button(label="Xác nhận đóng", style=discord.ButtonStyle.danger)
+            cancel_button = discord.ui.Button(label="Hủy", style=discord.ButtonStyle.secondary)
 
-        async def confirm_callback(confirm_interaction):
-            if confirm_interaction.user.id == interaction.user.id:
-                await self.close_ticket(confirm_interaction, channel, ticket_id)
+            async def confirm_callback(confirm_interaction):
+                if confirm_interaction.user.id == interaction.user.id:
+                    await self.close_ticket(confirm_interaction, channel, ticket_id)
 
-        async def cancel_callback(cancel_interaction):
-            if cancel_interaction.user.id == interaction.user.id:
-                await cancel_interaction.response.send_message("Đã hủy việc đóng order.", ephemeral=True)
+            async def cancel_callback(cancel_interaction):
+                if cancel_interaction.user.id == interaction.user.id:
+                    await cancel_interaction.response.send_message("Đã hủy việc đóng order.", ephemeral=True)
 
-        confirm_button.callback = confirm_callback
-        cancel_button.callback = cancel_callback
-        confirm_view.add_item(confirm_button)
-        confirm_view.add_item(cancel_button)
+            confirm_button.callback = confirm_callback
+            cancel_button.callback = cancel_callback
+            confirm_view.add_item(confirm_button)
+            confirm_view.add_item(cancel_button)
 
-        await interaction.response.send_message("Bạn có chắc chắn muốn đóng order này không?", view=confirm_view, ephemeral=True)
+            await interaction.response.send_message("Bạn có chắc chắn muốn đóng order này không?", view=confirm_view, ephemeral=True)
+        except Exception as e:
+            print(e)
 
     async def close_ticket(self, interaction, channel, ticket_id):
         if ticket_id not in self.close_locks:
