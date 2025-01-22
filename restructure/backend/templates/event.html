@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="vi" style="--theme-default: #65c15c; --theme-secondary: #43ab39;">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="{{ url_for('static', filename='assets/images/favicon.png') }}" type="image/x-icon">
+  <link rel="shortcut icon" href="{{ url_for('static', filename='assets/images/favicon.png') }}" type="image/x-icon">
+  <title>Danh sách đăng kí tham gia sự kiện: {{ event_name }}</title>
+  <!-- Google font-->
+  <link href="https://fonts.googleapis.com/css?family=Rubik:400,400i,500,500i,700,700i&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,500,500i,700,700i,900&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <!-- Font Awesome-->
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='assets/css/fontawesome.css') }}">
+  <!-- ico-font-->
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='assets/css/vendors/icofont.css') }}">
+  <!-- Themify icon-->
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='assets/css/vendors/themify.css') }}">
+  <!-- Flag icon-->
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='assets/css/vendors/flag-icon.css') }}">
+  <!-- Feather icon-->
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='assets/css/vendors/feather-icon.css') }}">
+  <!-- Plugins css start-->
+  <!-- Plugins css Ends-->
+  <!-- Bootstrap css-->
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='assets/css/vendors/bootstrap.css') }}">
+  <!-- App css-->
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='assets/css/style.css') }}">
+  <link id="color" rel="stylesheet" href="{{ url_for('static', filename='assets/css/color-1.css') }}" media="screen">
+  <!-- Responsive css-->
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='assets/css/responsive.css') }}">
+</head>
+<style>
+  .dt-buttons {
+    display: flex;
+    justify-content: right;
+    margin-bottom: 20px;
+  }
+</style>
+<body>
+  <!-- tap on top starts-->
+  <div class="tap-top"><i data-feather="chevrons-up"></i></div>
+  <!-- tap on tap ends-->
+  <!-- page-wrapper Start-->
+  <div class="page-wrapper compact-wrapper" id="pageWrapper">
+    <!-- error-403 start-->
+    <div class="error-wrapper">
+      <div class="container">
+        <div class="">
+          <div class="">
+            <h3>Danh sách đăng kí tham gia sự kiện: {{ event_name }} </h3>
+          </div>
+          <table id="studentTable" class="display" style="width:100%">
+            <thead>
+              <tr>
+                <th>Full Name</th>
+                <th>Student ID</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+          </table>
+        </div>
+      </div>
+    </div>
+    <!-- error-403 end-->
+  </div>
+  <!-- latest jquery-->
+  <script src="{{ url_for('static', filename='assets/js/jquery.min.js') }}"></script>
+  <!-- Bootstrap js-->
+  <script src="{{ url_for('static', filename='assets/js/bootstrap/bootstrap.bundle.min.js') }}"></script>
+  <!-- feather icon js-->
+  <script src="{{ url_for('static', filename='assets/js/icons/feather-icon/feather.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='assets/js/icons/feather-icon/feather-icon.js') }}"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+  <!-- scrollbar js-->
+  <!-- Sidebar jquery-->
+  <script src="{{ url_for('static', filename='assets/js/config.js') }}"></script>
+  <!-- Plugins JS start-->
+  <!-- Plugins JS Ends-->
+  <!-- Theme js-->
+  <script src="{{ url_for('static', filename='assets/js/script.js') }}"></script>
+  <script src="{{ url_for('static', filename='assets/js/script1.js') }}"></script>
+  <!-- <script src="{{ url_for('static', filename='assets/js/theme-customizer/customizer.js') }}"></script> -->
+  <script>
+    const API_URL = "http://127.0.0.1:5000/event/participant/{{ event_id }}"
+    $(document).ready(function () {
+      $.ajax({
+        url: API_URL,
+        method: "GET",
+        dataType: "json",
+        success: function (response) {
+          if (response.success) {
+            const data = JSON.parse(response.data);
+            $('#studentTable').DataTable({
+              data: data,
+              columns: [
+                { data: 'fullname', title: 'Họ và tên', width: '40%', className: "text-start"},
+                { data: 'student_id', title: 'Mã sinh viên', width: '30%', className: "text-center"},
+                {
+                  data: 'status',
+                  title: 'Trạng thái',
+                  render: function (data) {
+                    return data === "going" ? `<span class="badge badge-light-success" style="font-size: 12px;">Tham gia</span>` : `<span class="badge badge-light-danger" style="font-size: 12px;">Không tham gia</span>`;
+                  },
+                  className: "text-center"
+                }
+              ],
+              language: {
+                search: "Tìm kiếm:",
+                lengthMenu: "Hiển thị _MENU_ dòng mỗi trang",
+                info: "Hiển thị _START_ đến _END_ của _TOTAL_ dòng",
+                infoEmpty: "Không có dữ liệu để hiển thị",
+                paginate: {
+                  first: "Đầu tiên",
+                  last: "Cuối cùng",
+                  next: "Tiếp theo",
+                  previous: "Trước đó"
+                },
+                zeroRecords: "Không tìm thấy dữ liệu phù hợp",
+                infoFiltered: "(Lọc từ _MAX_ tổng số dòng)",
+                emptyTable: "Không có dữ liệu trong bảng",
+              },
+              scrollX: true,
+              dom: 'B<"top"fl>rt<"bottom"ip><"clear">',
+              buttons: [
+                {
+                  extend: 'csvHtml5', // Xuất file CSV
+                  text: 'Xuất dữ liệu .CSV', // Tên nút
+                  title: 'Danh sách sinh viên', // Tên file xuất ra
+                  className: 'btn btn-primary', // CSS cho nút (tuỳ chọn)
+                  exportOptions: {
+                    columns: ':visible' // Chỉ xuất các cột đang hiển thị
+                  },
+                  customize: function (csv) {
+                    return "\uFEFF" + csv;
+                  }
+                }
+              ],
+            });
+          } else {
+            alert("Failed to load data from API.");
+          }
+        },
+        error: function () {
+          alert("An error occurred while fetching data.");
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -3,12 +3,12 @@ from discord.ext import commands
 from utils.database import db
 import asyncio
 from constants import Discord_API_KEY_bot
-import backend.backend
+from backend.backend import app
 intents = discord.Intents.default()
 intents.message_content = True
 intents.reactions = True
 intents.members = True
-
+import threading
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 @bot.event
@@ -33,8 +33,10 @@ async def sync_commands():
         print(e)
 
 async def main():
+    flask_thread = threading.Thread(target=app.run)
+    flask_thread.daemon = True 
+    flask_thread.start()
     async with bot:
         await bot.start(Discord_API_KEY_bot)
 
 asyncio.run(main())
-asyncio.run(backend.backend.run_app())

@@ -77,7 +77,7 @@ class EventHandler(commands.Cog):
             """
             db.execute_query(query, (event_id[0], role.id))
 
-        embed.set_field_at(6, name="Danh sách đăng kí tham gia:", value=f"https://gdgoc.uong.beer/event/participants/{event_id[0]}", inline=False)
+        embed.set_field_at(6, name="Danh sách đăng kí tham gia:", value=f"https://gdgoc.uong.beer/event/{event_id[0]}", inline=False)
         embed.set_footer(text=f"ID sự kiện: {event_id[0]}")
         
         await message.edit(embed=embed)
