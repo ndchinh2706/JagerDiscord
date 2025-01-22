@@ -27,7 +27,6 @@ Jagermeister bot được phát triển nhằm hỗ trợ công tác quy trình 
 - Python 3.11.9.
 - (to be updated)
 ### Initial setup:
-- Create environment
-- pip install -r requirements.txt
+    $ pip install -r requirements.txt
 ### Usage:
-- python main.py
+    $ python main.py
