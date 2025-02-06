@@ -68,6 +68,11 @@ class Database:
                 PRIMARY KEY (event_id, user_id),
                 FOREIGN KEY (event_id) REFERENCES events(id)
             )''',
+            '''CREATE TABLE IF NOT EXISTS transactions (
+                transactionDate TIMESTAMP,
+                addDescription TEXT,
+                creditAmount int
+            )''',
             '''CREATE TABLE IF NOT EXISTS users (
                 user_id BIGINT PRIMARY KEY,
                 points INTEGER,
