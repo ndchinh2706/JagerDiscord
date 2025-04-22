@@ -1,9 +1,18 @@
 from flask import Flask, render_template, jsonify
 from backend.backend_misc import event_participants, event_name
 from flask_cors import CORS
+import datetime
+
 app = Flask(__name__)
  
 CORS(app)
+
+@app.route('/')
+def home():
+    # Get current datetime for showing in event cards
+    now = datetime.datetime.now()
+    return render_template('home.html', now=now)
+
 @app.route('/event/participant/<int:id>', methods=['GET'])
 def get_event_participants(id):
     try:

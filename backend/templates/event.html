@@ -4,14 +4,20 @@
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" href="{{ url_for('static', filename='assets/images/favicon.png') }}" type="image/x-icon">
-  <link rel="shortcut icon" href="{{ url_for('static', filename='assets/images/favicon.png') }}" type="image/x-icon">
+  <link rel="icon" href="{{ url_for('static', filename='assets/images/gdsc.png') }}" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='assets/images/gdsc.png') }}">
+  <!-- Additional favicon settings for various platforms -->
+  <meta name="msapplication-TileImage" content="{{ url_for('static', filename='assets/images/gdsc.png') }}">
+  <meta name="msapplication-TileColor" content="#65c15c">
+  <meta name="theme-color" content="#65c15c">
   <title>Danh sách đăng kí tham gia sự kiện: {{ event_name }}</title>
   <!-- Google font-->
   <link href="https://fonts.googleapis.com/css?family=Rubik:400,400i,500,500i,700,700i&amp;display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,500,500i,700,700i,900&amp;display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <!-- Added Google Sans font -->
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
   <!-- Font Awesome-->
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='assets/css/fontawesome.css') }}">
   <!-- ico-font-->
@@ -33,25 +39,304 @@
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='assets/css/responsive.css') }}">
 </head>
 <style>
+  body {
+    font-family: 'Google Sans', 'Roboto', sans-serif;
+  }
+  
   .dt-buttons {
     display: flex;
     justify-content: right;
     margin-bottom: 20px;
   }
+  
+  /* Improved mobile responsiveness */
+  @media (max-width: 768px) {
+    .card-body {
+      padding: 10px;
+    }
+    
+    #studentTable {
+      font-size: 14px;
+    }
+    
+    .dt-buttons {
+      margin-bottom: 10px;
+      justify-content: center;
+    }
+    
+    .stats-card h3 {
+      font-size: 1.5rem;
+    }
+    
+    .navbar-brand img {
+      max-width: 150px;
+    }
+  }
+  
+  /* Stats cards styling */
+  .stats-card {
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+    font-family: 'Google Sans', sans-serif;
+  }
+  
+  .stats-card:hover {
+    transform: translateY(-5px);
+  }
+  
+  .stats-card h3 {
+    font-size: 1.8rem;
+    margin-bottom: 5px;
+    font-weight: 600;
+    font-family: 'Google Sans', sans-serif;
+  }
+  
+  .stats-card p {
+    margin-bottom: 0;
+    color: #6c757d;
+    font-family: 'Google Sans', sans-serif;
+  }
+  
+  .bg-attending {
+    background-color: #d1e7dd;
+    color: #0f5132;
+  }
+  
+  .bg-not-attending {
+    background-color: #f8d7da;
+    color: #842029;
+  }
+  
+  .bg-total {
+    background-color: #cfe2ff;
+    color: #084298;
+  }
+  
+  .bg-rate {
+    background-color: #fff3cd;
+    color: #664d03;
+  }
+  
+  /* Loading indicator */
+  #loadingIndicator {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.8);
+    z-index: 9999;
+  }
+  
+  /* Navbar styling */
+  .navbar {
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+  }
+  
+  .navbar-brand img {
+    height: 40px;
+    width: auto;
+    object-fit: contain;
+  }
+  
+  /* Logo switching for different screen sizes */
+  .logo-large {
+    display: block;
+  }
+  
+  .logo-small {
+    display: none;
+  }
+  
+  @media (max-width: 768px) {
+    .logo-large {
+      display: none;
+    }
+    
+    .logo-small {
+      display: block;
+    }
+  }
+  
+  /* QR Code hover */
+  .discord-link {
+    position: relative;
+  }
+  
+  .discord-link .qr-hover {
+    position: absolute;
+    display: none;
+    width: 200px;
+    top: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    z-index: 100;
+  }
+  
+  .discord-link:hover .qr-hover {
+    display: block;
+  }
+  
+  .qr-hover img {
+    width: 100%;
+    height: auto;
+  }
+  
+  /* CSV Download button */
+  .csv-download-btn {
+    color: #fff;
+    background-color: #65c15c;
+    border-color: #65c15c;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    border-radius: 0.25rem;
+    transition: all 0.15s ease-in-out;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+  }
+  
+  .csv-download-btn:hover {
+    background-color: #43ab39;
+    border-color: #43ab39;
+    color: #fff;
+  }
+  
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  /* Badge styling */
+  .badge-light-success {
+    background-color: #43ab39;
+    color: white !important;
+    font-family: 'Google Sans', sans-serif;
+    padding: 5px 8px;
+    border-radius: 4px;
+  }
+  
+  .badge-light-danger {
+    background-color: #dc3545;
+    color: white !important;
+    font-family: 'Google Sans', sans-serif;
+    padding: 5px 8px;
+    border-radius: 4px;
+  }
+  
+  /* Navigation and headers */
+  h1, h2, h3, h4, h5, h6, .navbar, .nav-link, .navbar-brand {
+    font-family: 'Google Sans', sans-serif;
+  }
+  
+  table, .dataTables_wrapper, .dataTables_info, .paginate_button {
+    font-family: 'Google Sans', sans-serif !important;
+  }
 </style>
 <body>
+  <!-- Loading indicator start -->
+  <div id="loadingIndicator">
+    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-3 h5">Đang tải dữ liệu...</p>
+  </div>
+  <!-- Loading indicator end -->
+
+  <!-- Navbar start -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-white py-3">
+    <div class="container">
+      <a class="navbar-brand" href="/">
+        <img src="{{ url_for('static', filename='assets/images/logo.png') }}" alt="GDGOC Logo" class="logo-large">
+        <img src="{{ url_for('static', filename='assets/images/gdsc.png') }}" alt="GDSC Logo" class="logo-small">
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link active" aria-current="page" href="/">Trang chủ</a>
+          </li>
+          <li class="nav-item discord-link">
+            <a class="nav-link" href="https://discord.gg/zzfVU6zCru" target="_blank">Discord group</a>
+            <div class="qr-hover">
+              <img src="{{ url_for('static', filename='assets/images/qr.png') }}" alt="Discord QR Code">
+              <p class="text-center mt-2 mb-0">Scan to join</p>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+  <!-- Navbar end -->
+
   <!-- tap on top starts-->
   <div class="tap-top"><i data-feather="chevrons-up"></i></div>
   <!-- tap on tap ends-->
   <!-- page-wrapper Start-->
   <div class="page-wrapper compact-wrapper" id="pageWrapper">
-    <!-- error-403 start-->
-    <div class="error-wrapper">
-      <div class="container">
-        <div class="">
-          <div class="">
-            <h3>Danh sách đăng kí tham gia sự kiện: {{ event_name }} </h3>
+    <div class="container py-5">
+      <div class="row mb-4">
+        <div class="col-12">
+          <h2 class="mb-4">Sự kiện: {{ event_name }}</h2>
+        </div>
+      </div>
+      
+      <!-- Event statistics start -->
+      <div class="row mb-4">
+        <div class="col-md-3 col-sm-6 mb-3 mb-md-0">
+          <div class="stats-card text-center bg-total">
+            <h3 id="totalCount">0</h3>
+            <p>Tổng số người tham gia</p>
           </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3 mb-md-0">
+          <div class="stats-card text-center bg-attending">
+            <h3 id="goingCount">0</h3>
+            <p>Số người tham gia</p>
+          </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3 mb-md-0">
+          <div class="stats-card text-center bg-not-attending">
+            <h3 id="notGoingCount">0</h3>
+            <p>Số người không tham gia</p>
+          </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+          <div class="stats-card text-center bg-rate">
+            <h3 id="attendanceRate">0%</h3>
+            <p>Tỷ lệ tham gia</p>
+          </div>
+        </div>
+      </div>
+      <!-- Event statistics end -->
+      
+      <!-- Filter buttons - Removed as requested -->
+      
+      <!-- Table card start -->
+      <div class="card">
+        <div class="card-header">
+          <h5>Danh sách người tham gia</h5>
+          <a id="csvDownloadBtn" class="csv-download-btn" href="#" download>
+            <i class="fa fa-download"></i> Xuất dữ liệu Excel
+          </a>
+        </div>
+        <div class="card-body">
           <table id="studentTable" class="display" style="width:100%">
             <thead>
               <tr>
@@ -63,8 +348,8 @@
           </table>
         </div>
       </div>
+      <!-- Table card end -->
     </div>
-    <!-- error-403 end-->
   </div>
   <!-- latest jquery-->
   <script src="{{ url_for('static', filename='assets/js/jquery.min.js') }}"></script>
@@ -78,6 +363,9 @@
   <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
   <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
 
   <!-- scrollbar js-->
   <!-- Sidebar jquery-->
@@ -89,16 +377,35 @@
   <script src="{{ url_for('static', filename='assets/js/script1.js') }}"></script>
   <!-- <script src="{{ url_for('static', filename='assets/js/theme-customizer/customizer.js') }}"></script> -->
   <script>
-    const API_URL = "http://127.0.0.1:5000/event/participant/{{ event_id }}"
+    const API_URL = "http://127.0.0.1:5000/event/participant/{{ event_id }}";
+    let table;
+    
     $(document).ready(function () {
       $.ajax({
         url: API_URL,
         method: "GET",
         dataType: "json",
         success: function (response) {
+          // Hide loading indicator on success
+          $('#loadingIndicator').fadeOut();
+          
           if (response.success) {
             const data = JSON.parse(response.data);
-            $('#studentTable').DataTable({
+            
+            // Calculate statistics
+            const totalCount = data.length;
+            const goingCount = data.filter(item => item.status === "going").length;
+            const notGoingCount = totalCount - goingCount;
+            const attendanceRate = totalCount > 0 ? Math.round((goingCount / totalCount) * 100) : 0;
+            
+            // Update statistics display
+            $("#totalCount").text(totalCount);
+            $("#goingCount").text(goingCount);
+            $("#notGoingCount").text(notGoingCount);
+            $("#attendanceRate").text(attendanceRate + "%");
+            
+            // Initialize DataTable
+            table = $('#studentTable').DataTable({
               data: data,
               columns: [
                 { data: 'fullname', title: 'Họ và tên', width: '40%', className: "text-start"},
@@ -107,7 +414,9 @@
                   data: 'status',
                   title: 'Trạng thái',
                   render: function (data) {
-                    return data === "going" ? `<span class="badge badge-light-success" style="font-size: 12px;">Tham gia</span>` : `<span class="badge badge-light-danger" style="font-size: 12px;">Không tham gia</span>`;
+                    return data === "going" ? 
+                      `<span class="badge badge-light-success" style="font-size: 12px; color: white;">Tham gia</span>` : 
+                      `<span class="badge badge-light-danger" style="font-size: 12px;">Không tham gia</span>`;
                   },
                   className: "text-center"
                 }
@@ -128,27 +437,38 @@
                 emptyTable: "Không có dữ liệu trong bảng",
               },
               scrollX: true,
-              dom: 'B<"top"fl>rt<"bottom"ip><"clear">',
+              responsive: true,
+              dom: '<"top"f>rt<"bottom"ip><"clear">B',
               buttons: [
                 {
-                  extend: 'csvHtml5', // Xuất file CSV
-                  text: 'Xuất dữ liệu .CSV', // Tên nút
-                  title: 'Danh sách sinh viên', // Tên file xuất ra
-                  className: 'btn btn-primary', // CSS cho nút (tuỳ chọn)
+                  extend: 'excelHtml5',
+                  text: 'Xuất dữ liệu Excel',
+                  title: 'Danh sách sinh viên',
+                  className: 'btn btn-primary d-none',
                   exportOptions: {
-                    columns: ':visible' // Chỉ xuất các cột đang hiển thị
+                    columns: ':visible'
                   },
-                  customize: function (csv) {
-                    return "\uFEFF" + csv;
+                  customize: function(xlsx) {
+                    // You can customize the Excel file here if needed
                   }
                 }
               ],
             });
+            
+            // Connect custom download button to DataTables Excel export
+            $('#csvDownloadBtn').on('click', function(e) {
+              e.preventDefault();
+              table.button('.buttons-excel').trigger();
+            });
           } else {
+            // Hide loading indicator and show error
+            $('#loadingIndicator').fadeOut();
             alert("Failed to load data from API.");
           }
         },
         error: function () {
+          // Hide loading indicator and show error
+          $('#loadingIndicator').fadeOut();
           alert("An error occurred while fetching data.");
         }
       });
