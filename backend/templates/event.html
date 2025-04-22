@@ -16,8 +16,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,500,500i,700,700i,900&amp;display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-  <!-- Added Google Sans font -->
-  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
   <!-- Font Awesome-->
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='assets/css/fontawesome.css') }}">
   <!-- ico-font-->
@@ -39,10 +37,6 @@
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='assets/css/responsive.css') }}">
 </head>
 <style>
-  body {
-    font-family: 'Google Sans', 'Roboto', sans-serif;
-  }
-  
   .dt-buttons {
     display: flex;
     justify-content: right;
@@ -80,7 +74,6 @@
     margin-bottom: 20px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     transition: transform 0.3s ease;
-    font-family: 'Google Sans', sans-serif;
   }
   
   .stats-card:hover {
@@ -91,13 +84,11 @@
     font-size: 1.8rem;
     margin-bottom: 5px;
     font-weight: 600;
-    font-family: 'Google Sans', sans-serif;
   }
   
   .stats-card p {
     margin-bottom: 0;
     color: #6c757d;
-    font-family: 'Google Sans', sans-serif;
   }
   
   .bg-attending {
@@ -220,32 +211,6 @@
     justify-content: space-between;
     align-items: center;
   }
-  
-  /* Badge styling */
-  .badge-light-success {
-    background-color: #43ab39;
-    color: white !important;
-    font-family: 'Google Sans', sans-serif;
-    padding: 5px 8px;
-    border-radius: 4px;
-  }
-  
-  .badge-light-danger {
-    background-color: #dc3545;
-    color: white !important;
-    font-family: 'Google Sans', sans-serif;
-    padding: 5px 8px;
-    border-radius: 4px;
-  }
-  
-  /* Navigation and headers */
-  h1, h2, h3, h4, h5, h6, .navbar, .nav-link, .navbar-brand {
-    font-family: 'Google Sans', sans-serif;
-  }
-  
-  table, .dataTables_wrapper, .dataTables_info, .paginate_button {
-    font-family: 'Google Sans', sans-serif !important;
-  }
 </style>
 <body>
   <!-- Loading indicator start -->
@@ -260,7 +225,7 @@
   <!-- Navbar start -->
   <nav class="navbar navbar-expand-lg navbar-light bg-white py-3">
     <div class="container">
-      <a class="navbar-brand" href="/">
+      <a class="navbar-brand" href="#">
         <img src="{{ url_for('static', filename='assets/images/logo.png') }}" alt="GDGOC Logo" class="logo-large">
         <img src="{{ url_for('static', filename='assets/images/gdsc.png') }}" alt="GDSC Logo" class="logo-small">
       </a>
@@ -270,7 +235,7 @@
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav ms-auto">
           <li class="nav-item">
-            <a class="nav-link active" aria-current="page" href="/">Trang chủ</a>
+            <a class="nav-link active" aria-current="page" href="#">Trang chủ</a>
           </li>
           <li class="nav-item discord-link">
             <a class="nav-link" href="https://discord.gg/zzfVU6zCru" target="_blank">Discord group</a>
@@ -377,7 +342,7 @@
   <script src="{{ url_for('static', filename='assets/js/script1.js') }}"></script>
   <!-- <script src="{{ url_for('static', filename='assets/js/theme-customizer/customizer.js') }}"></script> -->
   <script>
-    const API_URL = "http://127.0.0.1:5000/event/participant/{{ event_id }}";
+    const API_URL = "https://gdgoc.uong.beer/event/participant/{{ event_id }}";
     let table;
     
     $(document).ready(function () {
@@ -415,7 +380,7 @@
                   title: 'Trạng thái',
                   render: function (data) {
                     return data === "going" ? 
-                      `<span class="badge badge-light-success" style="font-size: 12px; color: white;">Tham gia</span>` : 
+                      `<span class="badge badge-light-success" style="font-size: 12px;">Tham gia</span>` : 
                       `<span class="badge badge-light-danger" style="font-size: 12px;">Không tham gia</span>`;
                   },
                   className: "text-center"
